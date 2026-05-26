@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Védett Oldal</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body, html {
+            width: 100%;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+        }
+
+        /* Másolás, kijelölés megnehezítése a képeknél/háttérnél, de a szövegek kijelölhetők */
+        body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        img, iframe {
+            -webkit-user-drag: none;
+            user-drag: none;
+            pointer-events: auto;       
+        }
+
+        body.locked { overflow: hidden; }
+        body.unlocked { overflow-y: auto; }
+
+        /* Auth Gate Overlay */
+        #auth-gate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .auth-box {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+        }
+
+        .auth-box h2 { margin-bottom: 20px; color: #333; font-size: 1.8rem; }
+        .auth-box h2 span { color: #ff5722; }
+
+        .auth-box input {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        .auth-box input:focus { border-color: #ff5722; }
+        .auth-box button {
+            background-color: #ff5722; color: white; padding: 12px 24px; margin-top: 15px;
+            border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: background 0.3s;
+        }
+        .auth-box button:hover { background-color: #e64a19; }
+        .auth-box .toggle-link { font-size: 0.9rem; color: #007bff; cursor: pointer; text-align: center; display: block; margin-top: 15px; font-weight: 500; }
+        .auth-box .forgot-link { font-size: 0.8rem; color: #666; cursor: pointer; text-align: center; display: block; margin-top: 12px; text-decoration: underline; }
+        .auth-box .forgot-link:hover { color: #ff5722; }
+
+        #gate-status-msg { margin-top: 15px; padding: 10px; border-radius: 6px; font-size: 0.9rem; display: none; }
+        #gate-status-msg.error { background-color: #f8d7da; color: #721c24; display: block; }
+        #gate-status-msg.success { background-color: #d4edda; color: #155724; display: block; }
+
+        /* Main Content wrapper */
+        #main-wrapper { display: none; position: relative; padding-top: 60px; }
+
+        /* Navbar */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: #1a1a1a;
+            border-bottom: 1px solid #2d2d2d; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .navbar-brand { color: white; font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; }
+        .navbar-brand span { color: #ff5722; }
+        .auth-container { position: relative; }
+        .auth-icon-btn {
+            background-color: #2d2d2d; color: white; border: 1px solid #28a745; width: 42px; height: 42px;
+            border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; transition: all 0.2s ease;
+        }
+        .auth-icon-btn:hover { background-color: #ff5722; border-color: #ff5722; transform: scale(1.05); }
+
+        .auth-dropdown {
+            display: none; position: absolute; top: 50px; right: 0; background: white; padding: 20px;
+            border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); width: 290px; color: #333; animation: fadeInDropdown 0.2s ease-out;
+        }
+        @keyframes fadeInDropdown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .auth-dropdown.active { display: block; }
+        .auth-dropdown h3 { margin-bottom: 12px; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .auth-dropdown input { width: 100%; padding: 10px 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; outline: none; font-size: 0.9rem; -webkit-user-select: text; user-select: text; }
+        .auth-dropdown button { width: 100%; padding: 10px; background-color: #ff5722; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; margin-bottom: 5px; }
+
+        .user-logged-in-info { text-align: center; }
+        .user-logged-in-info p { font-size: 0.95rem; margin-bottom: 12px; }
+        .email-change-box { margin-top: 15px; padding-top: 15px; border-top: 2px dashed #eee; text-align: left; }
+        .email-change-box label { font-size: 0.8rem; font-weight: bold; color: #555; display: block; margin-bottom: 4px; }
+
+        /* Hero Section */
+        .hero-section { width: 100%; height: calc(100vh - 60px); background-image: url('https://i.ibb.co/PGrxKZBF/papabg.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; position: relative; }
+        .content-overlay { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.45); }
+        .welcome-text { color: white; font-size: 3.5rem; text-shadow: 2px 2px 12px rgba(0,0,0,0.8); text-align: center; font-weight: 800; padding: 0 20px; }
+        .scroll-indicator { position: absolute; bottom: 30px; color: rgba(255, 255, 255, 0.7); font-size: 1rem; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+
+        /* Comic Section and Tabs */
+        .comic-section { background-color: #f4f6f9; color: #2c3e50; padding: 60px 20px 80px 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        .tabs-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; width: 100%; max-width: 1000px; }
+        .tab-button { background-color: #e0e0e0; color: #333; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: 600; transition: all 0.3s ease; }
+        .tab-button.active { background-color: #ff5722; color: white; box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3); }
+
+        .admin-only-tab { display: none !important; background-color: #343a40; color: #ff9800; border: 1px solid #ff9800; }
+        .admin-only-tab.admin-visible { display: inline-block !important; }
+        .admin-only-tab.active { background-color: #ff9800 !important; color: white !important; }
+
+        .tab-content { display: none; width: 100%; max-width: 1200px; }
+        .tab-content.active { display: block; }
+        .section-title { font-size: 2.8rem; margin-bottom: 50px; color: #1a1a1a; text-align: center; border-bottom: 4px solid #ff5722; padding-bottom: 10px; }
+
+        .comic-grid { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; }
+        @media (max-width: 600px) { .comic-grid { grid-template-columns: 1fr; } }
+        .comic-card { background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
+        .comic-img-container { width: 100%; background: #eaeaea; display: block; overflow-x: auto; text-align: center; }
+        .comic-img-container img { max-width: 100%; height: auto; image-rendering: -webkit-optimize-contrast; }
+        .img-placeholder-text { color: #777; font-style: italic; padding: 40px 20px; text-align: center; }
+
+        /* Upload Container */
+        .upload-container { background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); width: 100%; max-width: 600px; margin: 0 auto 50px auto; }
+        .upload-container p.subtitle { text-align: center; color: #666; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        
+        /* Formázó UI gombok stílusa */
+        .text-formatter-ui {
+            display: flex; gap: 4px; background: #f1f3f5; border: 2px solid #ccc; border-bottom: none; border-radius: 8px 8px 0 0; padding: 6px;
+        }
+        .text-formatter-ui button {
+            background: white; border: 1px solid #ced4da; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; cursor: pointer; font-weight: bold; color: #495057; transition: all 0.2s;
+        }
+        .text-formatter-ui button:hover { background: #ff5722; color: white; border-color: #ff5722; }
+
+        .form-group textarea {
+            width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 0 0 8px 8px; font-size: 15px; outline: none; resize: vertical; font-family: inherit; transition: border-color 0.3s; -webkit-user-select: text; user-select: text;
+        }
+        .form-group textarea:focus { border-color: #ff5722; }
+
+        .file-drop-zone { border: 2px dashed #ff5722; border-radius: 8px; padding: 30px 20px; text-align: center; background: #fff8f6; cursor: pointer; position: relative; }
+        .file-drop-zone input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .file-list { margin-top: 10px; font-size: 0.9rem; color: #ff5722; font-weight: 600; }
+
+        .submit-btn { background-color: #ff5722; color: white; padding: 14px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; width: 100%; }
+        .submit-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        .form-status { margin-top: 15px; padding: 12px; border-radius: 6px; text-align: center; display: none; }
+        .form-status.success { background-color: #d4edda; color: #155724; display: block; }
+        .form-status.error { background-color: #f8d7da; color: #721c24; display: block; }
+
+        /* Admin Components */
+        .admin-table-wrapper { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); overflow-x: auto; width: 100%; margin-bottom: 30px; }
+        .admin-table { width: 100%; border-collapse: collapse; text-align: left; color: #333; }
+        .admin-table th, .admin-table td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+        .admin-table th { background-color: #f8f9fa; font-weight: bold; }
+        .user-delete-btn { background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        .whitelist-add-box { display: flex; gap: 10px; margin-bottom: 20px; max-width: 500px; }
+        .whitelist-add-box input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; outline: none; -webkit-user-select: text; user-select: text; }
+        .whitelist-add-box button { background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* Gallery Styles */
+        .gallery-title { font-size: 2rem; margin: 40px 0 20px 0; text-align: center; color: #1a1a1a; }
+        
+        /* Poszt formázott szövegének stílusai */
+        .card-post-text {
+            padding: 15px 15px 5px 15px; font-size: 0.95rem; color: #333; line-height: 1.4; word-break: break-word; background: #ffffff; -webkit-user-select: text; user-select: text;
+        }
+        .card-post-text a, .comment-text a {
+            color: #ff5722; font-weight: bold; text-decoration: underline; cursor: pointer;
+        }
+        .card-post-text a:hover, .comment-text a:hover { color: #e64a19; }
+
+        .card-footer-info { padding: 10px 15px 15px 15px; background: #ffffff; font-size: 0.85rem; display: flex; flex-direction: column; gap: 8px; color: #555; }
+        .card-footer-row { display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 5px; }
+        .card-footer-info strong { color: #ff5722; }
+        .card-date { color: #888; font-size: 0.8rem; font-style: italic; display: flex; gap: 4px; align-items: center; }
+        .edited-badge { color: #ff9800; font-weight: bold; font-size: 0.75rem; }
+
+        .action-btn-group { display: flex; gap: 8px; }
+        .edit-btn { background-color: #ffc107; color: #212529; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        .delete-btn { background-color: #dc3545; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        
+        /* Edit inline box */
+        .inline-edit-box { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 5px; padding: 10px 15px; background: #fff; }
+        .inline-edit-box input, .inline-edit-box textarea { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; outline: none; -webkit-user-select: text; user-select: text; font-family: inherit; }
+        .inline-edit-box textarea { border-radius: 0 0 4px 4px; }
+        .inline-edit-btn-group { display: flex; gap: 5px; justify-content: flex-end; margin-top: 5px; }
+        .inline-save-btn { background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: bold; }
+        .inline-cancel-btn { background: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+
+        /* Komment szekció */
+        .comment-toggle-btn {
+            background: #f1f3f5; border: none; border-top: 1px solid #eee; color: #495057; padding: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;
+        }
+        .comment-section-wrapper { display: none; background: #f8f9fa; border-top: 1px solid #e9ecef; padding: 15px; }
+        .comment-section-wrapper.active { display: block; }
+        .comments-list { max-height: 250px; overflow-y: auto; margin-bottom: 15px; }
+        .comment-item { background: white; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.9rem; position: relative; display: flex; flex-direction: column; }
+        
+        .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; width: 100%; }
+        .comment-meta { font-weight: bold; font-size: 0.85rem; }
+        .comment-meta span { color: #ff5722; }
+        .comment-date-and-actions { display: flex; align-items: center; gap: 8px; }
+        .comment-date { color: #aaa; font-size: 0.75rem; font-style: italic; display: flex; gap: 4px; }
+
+        .comment-action-link { background: none; border: none; font-size: 0.75rem; cursor: pointer; padding: 0 2px; font-weight: bold; }
+        .comment-edit-link { color: #ffc107; }
+        .comment-delete-link { color: #dc3545; }
+        .comment-text { color: #495057; word-break: break-word; -webkit-user-select: text; user-select: text; padding-top: 2px; }
+
+        .comment-form-container { display: flex; flex-direction: column; width: 100%; }
+        .comment-form-container input[type="text"] { width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 0 0 6px 6px; outline: none; -webkit-user-select: text; user-select: text; }
+        .comment-form-container .comment-submit-row { display: flex; justify-content: flex-end; margin-top: 6px; }
+        .comment-form-container button[type="submit"] { background: #ff5722; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body class="locked">
+
+    <div id="auth-gate">
+        <div class="auth-box">
+            <h2 id="gate-title">PAPA<span>HAS</span> Belépés</h2>
+            <input type="text" id="gate-display-name" placeholder="Teljes neved (csak regisztrációnál)" style="display: none;">
+            <input type="email" id="gate-email" placeholder="E-mail cím">
+            <input type="password" id="gate-password" placeholder="Jelszó">
+            <button id="gate-main-btn" onclick="handleGateAction()">Bejelentkezés</button>
+            <span class="forgot-link" id="gate-forgot-link" onclick="handleForgotPassword()">Elfelejtettem a jelszavam</span>
+            <span class="forgot-link" id="gate-resend-link" onclick="handleResendVerificationEmail()" style="margin-top: 6px; color: #007bff;">Új megerősítő e-mailt kérek</span>
+            <span class="toggle-link" id="gate-toggle-text" onclick="toggleGateMode()">Még nincs fiókom? Regisztráció</span>
+            <div id="gate-status-msg"></div>
+        </div>
+    </div>
+
+    <div id="main-wrapper">
+        <nav class="top-navbar">
+            <div class="navbar-brand">PAPA<span>HAS</span></div>
+            <div class="auth-container">
+                <button class="auth-icon-btn" onclick="toggleAuthDropdown()">👤</button>
+                <div class="auth-dropdown" id="auth-dropdown-panel">
+                    <div class="user-logged-in-info">
+                        <h3>Szia, <span id="user-profile-name">Felhasználó</span>!</h3>
+                        <p style="font-size: 0.8rem; color: #888;" id="user-profile-email">email@cim.com</p>
+                        <div class="email-change-box">
+                            <label for="new-email-input">E-mail módosítása:</label>
+                            <input type="email" id="new-email-input" placeholder="Új e-mail cím">
+                            <button onclick="handleChangeEmail()" style="background-color: #28a745; font-size:0.85rem; padding:6px; margin-bottom: 12px;">Frissítés</button>
+                            <label>Fiók biztonság:</label>
+                            <button onclick="handleLoggedInResetPassword()" style="background-color: #17a2b8; font-size:0.85rem; padding:6px;">Jelszó módosítása e-mailben</button>
+                        </div>
+                        <button onclick="handleLogout()" style="background-color: #6c757d; margin-top: 15px;">Kijelentkezés</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <section class="hero-section">
+            <div class="content-overlay">
+                <h1 class="welcome-text">A papa hasába érkeztél</h1>
+                <div class="scroll-indicator">Görgess le a folytatáshoz ↓</div>
+            </div>
+        </section>
+
+        <section class="comic-section">
+            <div class="tabs-container">
+                <button class="tab-button active" id="btn-tab-zsirhasu" onclick="switchTab('zsirhasu')">Én a zsírhasú</button>
+                <button class="tab-button" id="btn-tab-zsirhasu2" onclick="switchTab('zsirhasu2')">Én a zsírhasú 2</button>
+                <button class="tab-button" id="btn-tab-zsirhasu-film" onclick="switchTab('zsirhasu-film')">Én a zsírhasú, a film</button>
+                <button class="tab-button" id="btn-tab-papakepek" onclick="switchTab('papakepek')">Papaképek</button>
+                <button class="tab-button admin-only-tab" id="btn-tab-admin-whitelist" onclick="switchTab('admin-whitelist')">✉️ Engedélyezett E-mailek</button>
+                <button class="tab-button admin-only-tab" id="btn-tab-admin-users" onclick="switchTab('admin-users')">⚙️ Regisztrált Fiókok</button>
+            </div>
+
+            <div id="tab-zsirhasu" class="tab-content active">
+                <h2 class="section-title">Én a zsírhasú</h2>
+                <div class="comic-grid">
+                    <div class="comic-card"><div class="comic-img-container"><img src="https://i.ibb.co/k65x9dzr/K-perny-k-p-2026-05-22-200031.png"></div></div>
+                    <div class="comic-card"><div class="comic-img-container"><img src="https://i.ibb.co/YBBVNYSz/K-perny-k-p-2026-05-22-200105.png"></div></div>
+                    <div class="comic-card"><div class="comic-img-container"><img src="https://i.ibb.co/PssF2q5d/K-perny-k-p-2026-05-22-200116.png"></div></div>
+                    <div class="comic-card"><div class="comic-img-container"><img src="https://i.ibb.co/4w6Z6cDd/K-perny-k-p-2026-05-22-200131.png"></div></div>
+                    <div class="comic-card"><div class="comic-img-container"><img src="https://i.ibb.co/6c8CHgwF/K-perny-k-p-2026-05-22-200140.png"></div></div>
+                </div>
+            </div>
+
+            <div id="tab-zsirhasu2" class="tab-content">
+                <h2 class="section-title">Én a zsírhasú 2</h2>
+                <div class="comic-grid"><div class="comic-card"><div class="comic-img-container"><div class="img-placeholder-text">Hamarosan...</div></div></div></div>
+            </div>
+
+            <div id="tab-zsirhasu-film" class="tab-content">
+                <h2 class="section-title">Én a zsírhasú, a film</h2>
+                <div class="comic-grid"><div class="comic-card"><div class="comic-img-container"><div class="img-placeholder-text">Hamarosan...</div></div></div></div>
+            </div>
+
+            <div id="tab-papakepek" class="tab-content">
+                <h2 class="section-title">Papaképek küldése</h2>
+                <div class="upload-container">
+                    <div id="logged-in-upload-zone">
+                        <p class="subtitle" id="upload-box-subtitle">Tölts fel egy új képet és írj hozzá szöveget:</p>
+                        <form id="papa-upload-form" onsubmit="handleDirectUpload(event)">
+                            
+                            <div class="form-group">
+                                <label for="uploader-text">Szöveg / Leírás (opcionális):</label>
+                                <div class="text-formatter-ui">
+                                    <button type="button" onclick="formatText('uploader-text', 'B')">B</button>
+                                    <button type="button" onclick="formatText('uploader-text', 'I')"><em>I</em></button>
+                                    <button type="button" onclick="formatText('uploader-text', 'U')"><u>U</u></button>
+                                    <button type="button" onclick="formatText('uploader-text', 'S')"><s>S</s></button>
+                                    <button type="button" onclick="formatText('uploader-text', 'URL')">🔗 Link</button>
+                                </div>
+                                <textarea id="uploader-text" rows="3" placeholder="Írj valamit a képhez..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Kép kiválasztása:</label>
+                                <div class="file-drop-zone">
+                                    <p>Kattints ide vagy húzd ide a képet</p>
+                                    <input type="file" id="uploader-files" accept=".png, .jpg, .jpeg, .gif, .webp, .svg" required onchange="updateFileList()">
+                                </div>
+                                <div id="selected-files-list" class="file-list"></div>
+                            </div>
+                            
+                            <button type="submit" class="submit-btn" id="upload-btn">Posztolás</button>
+                        </form>
+                    </div>
+                    <div id="form-status-msg" class="form-status"></div>
+                </div>
+
+                <h3 class="gallery-title">Galéria</h3>
+                <div class="comic-grid" id="dynamic-papakepek-gallery"></div>
+            </div>
+
+            <div id="tab-admin-whitelist" class="tab-content">
+                <h2 class="section-title">✉️ Bejelentkezésre Engedélyezett E-mailek (Whitelist)</h2>
+                <div class="admin-table-wrapper">
+                    <div class="whitelist-add-box">
+                        <input type="email" id="whitelist-new-email" placeholder="pl: valaki@gmail.com">
+                        <button onclick="addEmailToWhitelist()">Hozzáadás a listához</button>
+                    </div>
+                    <table class="admin-table">
+                        <thead><tr><th>Engedélyezett E-mail Cím</th><th>Művelet</th></tr></thead>
+                        <tbody id="admin-whitelist-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-admin-users" class="tab-content">
+                <h2 class="section-title">⚙️ Regisztrált Felhasználói Fiókok</h2>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead><tr><th>Név</th><th>E-mail cím</th><th>Regisztráció dátuma</th><th>Művelet</th></tr></thead>
+                        <tbody id="admin-users-list-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref as dbRef, push, set, onValue, remove, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, setPersistence, browserLocalPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendEmailVerification, updateEmail, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDPpHBvFki71t288_j25mIQbydzMLoTXzA",
+            authDomain: "zoltan1papa.firebaseapp.com",
+            databaseURL: "https://zoltan1papa-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "zoltan1papa",
+            storageBucket: "zoltan1papa.firebasestorage.app",
+            messagingSenderId: "551604927242",
+            appId: "1:551604927242:web:75c7bfb6b02e469e9218f3",
+            measurementId: "G-X21PSC877H"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        const ADMIN_EMAIL = "lartacereal@gmail.com"; 
+        let currentUser = null;
+        let gateMode = "login";
+
+        setPersistence(auth, browserLocalPersistence).catch((e) => console.error(e));
+
+        function formatTimestamp(ts) {
+            if (!ts) return "";
+            const d = new Date(ts);
+            return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}. ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
+        // BIZTONSÁGOS SZÖVEGPARSOLÓ: Átalakítja a [B], [I], [U], [S] és [URL] kódokat HTML-lé
+        window.parseBBCode = function(text) {
+            if(!text) return "";
+            // Először kiszűrjük az esetleges beírt veszélyes HTML kódokat a biztonságért
+            let clean = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            
+            // BBCode-ok cseréje regular expression segítségével
+            clean = clean.replace(/\[B\]([\s\S]*?)\[\/B\]/gi, "<strong>$1</strong>");
+            clean = clean.replace(/\[I\]([\s\S]*?)\[\/I\]/gi, "<em>$1</em>");
+            clean = clean.replace(/\[U\]([\s\S]*?)\[\/U\]/gi, "<u>$1</u>");
+            clean = clean.replace(/\[S\]([\s\S]*?)\[\/S\]/gi, "<s>$1</s>");
+            
+            // [URL=link]szöveg[/URL] vagy sima [URL]link[/URL] átalakítása
+            clean = clean.replace(/\[URL=([^\]]+)\]([\s\S]*?)\[\/URL\]/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>');
+            clean = clean.replace(/\[URL\]([\s\S]*?)\[\/URL\]/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+            
+            // Sortörések megtartása
+            return clean.replace(/\n/g, "<br>");
+        }
+
+        window.toggleGateMode = function() {
+            const nameField = document.getElementById('gate-display-name');
+            const title = document.getElementById('gate-title');
+            const btn = document.getElementById('gate-main-btn');
+            const toggleText = document.getElementById('gate-toggle-text');
+            const forgotLink = document.getElementById('gate-forgot-link');
+            const resendLink = document.getElementById('gate-resend-link');
+            document.getElementById('gate-status-msg').style.display = "none";
+
+            if (gateMode === "login") {
+                gateMode = "register"; nameField.style.display = "block"; title.innerHTML = "PAPA<span>HAS</span> Regisztráció"; btn.textContent = "Fiók létrehozása"; toggleText.textContent = "Már van fiókom? Bejelentkezés"; forgotLink.style.display = "none"; resendLink.style.display = "none";
+            } else {
+                gateMode = "login"; nameField.style.display = "none"; title.innerHTML = "PAPA<span>HAS</span> Belépés"; btn.textContent = "Bejelentkezés"; toggleText.textContent = "Még nincs fiókom? Regisztráció"; forgotLink.style.display = "block"; resendLink.style.display = "block";
+            }
+        }
+
+        window.handleForgotPassword = async function() {
+            const email = document.getElementById('gate-email').value.trim();
+            if(!email) { showGateStatus("Kérlek, először írd be az e-mail címedet a fenti mezőbe!", "error"); return; }
+            try {
+                showGateStatus("Jelszó-visszaállító e-mail küldése...", "success");
+                await sendPasswordResetEmail(auth, email);
+                alert(`A jelszó-visszaállító linket elküldtük a(z) ${email} címre!`);
+                showGateStatus("E-mail elküldve!", "success");
+            } catch (error) { showGateStatus("Hiba a küldés során.", "error"); }
+        }
+
+        window.handleResendVerificationEmail = async function() {
+            const email = document.getElementById('gate-email').value.trim();
+            const password = document.getElementById('gate-password').value;
+            if(!email || !password) { showGateStatus("Írd be az e-mail címedet és a jelszavadat az újraküldéshez!", "error"); return; }
+            try {
+                showGateStatus("Azonosítás...", "success");
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                if (userCredential.user.emailVerified) { showGateStatus("Ez a fiók már aktiválva van! Jelentkezz be simán.", "success"); return; }
+                showGateStatus("Megerősítő link küldése...", "success");
+                await sendEmailVerification(userCredential.user);
+                await signOut(auth);
+                alert(`A megerősítő linket újra elküldtük a(z) ${email} címre!`);
+                showGateStatus("Megerősítő levél elküldve!", "success");
+            } catch (error) { showGateStatus("Hibás adatok vagy hiba történt a küldés során.", "error"); }
+        }
+
+        window.handleLoggedInResetPassword = async function() {
+            if (!currentUser || !currentUser.email) return;
+            try {
+                if(confirm(`Biztosan szeretnél jelszó-visszaállító linket kérni a(z) ${currentUser.email} címre?`)) {
+                    await sendPasswordResetEmail(auth, currentUser.email);
+                    alert("A jelszó módosításához szükséges linket elküldtük az e-mail címedre!");
+                    document.getElementById('auth-dropdown-panel').classList.remove('active');
+                }
+            } catch (error) { alert("Hiba történt a levél kiküldése közben."); }
+        }
+
+        window.handleGateAction = async function() {
+            const email = document.getElementById('gate-email').value.trim();
+            const password = document.getElementById('gate-password').value;
+            const displayName = document.getElementById('gate-display-name').value.trim();
+            if(!email || !password) { showGateStatus("Minden mezőt tölts ki!", "error"); return; }
+
+            try {
+                if (gateMode === "register") {
+                    if(!displayName) { showGateStatus("Add meg a neved is!", "error"); return; }
+                    showGateStatus("Engedély ellenőrzése...", "success");
+                    
+                    const whitelistSnapshot = await get(dbRef(database, 'whitelist'));
+                    let isAllowed = false;
+                    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) isAllowed = true;
+                    else if (whitelistSnapshot.exists()) {
+                        isAllowed = Object.values(whitelistSnapshot.val()).some(val => val.toLowerCase() === email.toLowerCase());
+                    }
+
+                    if (!isAllowed) { showGateStatus("Ez az e-mail cím nincs az engedélyezett listán!", "error"); return; }
+
+                    showGateStatus("Fiók létrehozása...", "success");
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(userCredential.user, { displayName: displayName });
+                    await set(dbRef(database, `users/${userCredential.user.uid}`), { name: displayName, email: email, registeredAt: new Date().toLocaleDateString('hu-HU') });
+                    await sendEmailVerification(userCredential.user);
+                    await signOut(auth);
+                    alert("Sikeres regisztráció! Kiküldtünk egy hitelesítő linket. Kérlek erősítsd meg a fiókodat az e-mailben, csak UTÁNA tudsz bejelentkezni!");
+                    showGateStatus("Erősítsd meg az e-mail címed a belépéshez!", "success");
+                    gateMode = "register"; toggleGateMode();
+                } else {
+                    showGateStatus("Bejelentkezés...", "success");
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+            } catch (error) { showGateStatus("Hiba: " + translateError(error.code), "error"); }
+        }
+
+        window.handleChangeEmail = async function() {
+            const newEmail = document.getElementById('new-email-input').value.trim();
+            if(!newEmail || !currentUser) return;
+            try {
+                if(confirm("Biztosan megváltoztatod az e-mail címedet? Újra be kell majd lépned.")) {
+                    await updateEmail(currentUser, newEmail);
+                    await update(dbRef(database, `users/${currentUser.uid}`), { email: newEmail });
+                    alert("E-mail sikeresen frissítve! Kérlek jelentkezz be újra.");
+                    await signOut(auth);
+                }
+            } catch(e) { alert("Hiba vagy lejárt munkamenet! Biztonsági okokból friss bejelentkezés szükséges."); }
+        }
+
+        window.addEmailToWhitelist = async function() {
+            const emailInput = document.getElementById('whitelist-new-email');
+            const email = emailInput.value.trim().toLowerCase();
+            if(!email) return;
+            if (currentUser && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                try {
+                    await set(push(dbRef(database, 'whitelist')), email); emailInput.value = ''; alert("E-mail hozzáadva!");
+                } catch(e) { alert("Hiba a mentésnél."); }
+            }
+        }
+
+        window.removeEmailFromWhitelist = async function(key) {
+            if (currentUser && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                if(confirm("Törlöd a listáról?")) await remove(dbRef(database, `whitelist/${key}`));
+            }
+        }
+
+        function showGateStatus(msg, type) {
+            const statusMsg = document.getElementById('gate-status-msg');
+            statusMsg.className = `gate-status-msg ${type}`; statusMsg.textContent = msg; statusMsg.style.display = "block";
+        }
+
+        function translateError(code) {
+            switch(code) {
+                case "auth/invalid-credential": return "Hibás e-mail cím vagy jelszó!";
+                case "auth/email-already-in-use": return "Ez az e-mail már regisztrálva van!";
+                case "auth/weak-password": return "A jelszónak legalább 6 karakternek kell lennie!";
+                default: return "Sikertelen hitelesítés.";
+            }
+        }
+
+        window.toggleAuthDropdown = function() { document.getElementById('auth-dropdown-panel').classList.toggle('active'); }
+        window.handleLogout = function() { signOut(auth).then(() => { switchTab('zsirhasu'); }); }
+
+        onAuthStateChanged(auth, async (user) => {
+            const gate = document.getElementById('auth-gate');
+            const mainWrapper = document.getElementById('main-wrapper');
+            const uploadSubtitle = document.getElementById('upload-box-subtitle');
+
+            if (user) {
+                if (!user.emailVerified) {
+                    currentUser = null; showGateStatus("A belépéshez előbb aktiválnod kell a fiókodat az e-mailben kapott linkkel!", "error"); await signOut(auth);
+                    document.body.className = "locked"; mainWrapper.style.display = 'none'; gate.style.display = 'flex'; gate.style.opacity = '1'; return;
+                }
+                currentUser = user; gate.style.opacity = '0';
+                setTimeout(() => { gate.style.display = 'none'; mainWrapper.style.display = 'block'; document.body.className = "unlocked"; }, 400);
+
+                document.getElementById('user-profile-name').textContent = user.displayName || "Felhasználó";
+                document.getElementById('user-profile-email').textContent = user.email;
+                
+                const isAdmin = user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+                document.querySelectorAll('.admin-only-tab').forEach(el => {
+                    if(isAdmin) el.classList.add('admin-visible'); else el.classList.remove('admin-visible');
+                });
+                if(uploadSubtitle) uploadSubtitle.innerHTML = `Szia <strong>${user.displayName}</strong>! Oszd meg a legújabb papaképet, formázd a szöveget kedvedre.`;
+            } else {
+                currentUser = null; document.body.className = "locked"; mainWrapper.style.display = 'none'; gate.style.display = 'flex'; gate.style.opacity = '1';
+            }
+            refreshGalleryView();
+        });
+
+        const convertFileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = e => reject(e);
+        });
+
+        window.handleDirectUpload = async function(event) {
+            event.preventDefault();
+            if (!currentUser || !currentUser.emailVerified) return;
+            const fileInput = document.getElementById('uploader-files');
+            const textInput = document.getElementById('uploader-text');
+            const statusMsg = document.getElementById('form-status-msg');
+            const btn = document.getElementById('upload-btn');
+            if(fileInput.files.length === 0) return;
+
+            btn.disabled = true; statusMsg.style.display = "block"; statusMsg.className = "form-status success"; statusMsg.textContent = "Küldés...";
+
+            try {
+                const base64Image = await convertFileToBase64(fileInput.files[0]);
+                await set(push(dbRef(database, 'pure_images')), {
+                    name: currentUser.displayName || "Névtelen", email: currentUser.email, imageData: base64Image, text: textInput.value.trim(), timestamp: Date.now()
+                });
+                statusMsg.textContent = "Sikeres posztolás!";
+                document.getElementById('papa-upload-form').reset(); document.getElementById('selected-files-list').innerHTML = '';
+            } catch (error) { statusMsg.className = "form-status error"; statusMsg.textContent = "Hiba történt!"; }
+            finally { btn.disabled = false; }
+        }
+
+        window.submitComment = async function(event, imageId) {
+            event.preventDefault();
+            const inputField = document.getElementById(`comment-input-${imageId}`);
+            const text = inputField.value.trim();
+            if(!text || !currentUser || !currentUser.emailVerified) return;
+            try {
+                await set(push(dbRef(database, `pure_images/${imageId}/comments`)), {
+                    name: currentUser.displayName || "Névtelen", email: currentUser.email, text: text, timestamp: Date.now()
+                });
+                inputField.value = '';
+            } catch(e) { alert("Hiba."); }
+        }
+
+        window.openEditImageContent = function(imageId, currentName, currentText) {
+            const targetDiv = document.getElementById(`image-content-edit-zone-${imageId}`);
+            if(!targetDiv) return;
+            
+            const safeText = currentText.replace(/"/g, '&quot;');
+            targetDiv.innerHTML = `
+                <div class="inline-edit-box">
+                    <label style="font-size:0.75rem; font-weight:bold; color:#ff5722;">Beküldő neve:</label>
+                    <input type="text" id="edit-image-name-input-${imageId}" value="${currentName}" autocomplete="off">
+                    
+                    <label style="font-size:0.75rem; font-weight:bold; color:#ff5722; margin-top:5px;">Poszt szövege (Formázható):</label>
+                    <div class="text-formatter-ui">
+                        <button type="button" onclick="formatText('edit-image-text-input-${imageId}', 'B')">B</button>
+                        <button type="button" onclick="formatText('edit-image-text-input-${imageId}', 'I')">I</button>
+                        <button type="button" onclick="formatText('edit-image-text-input-${imageId}', 'U')">U</button>
+                        <button type="button" onclick="formatText('edit-image-text-input-${imageId}', 'S')">S</button>
+                        <button type="button" onclick="formatText('edit-image-text-input-${imageId}', 'URL')">🔗 Link</button>
+                    </div>
+                    <textarea id="edit-image-text-input-${imageId}" rows="3">${safeText}</textarea>
+                    
+                    <div class="inline-edit-btn-group">
+                        <button class="inline-save-btn" onclick="saveImageContent('${imageId}')">Mentés</button>
+                        <button class="inline-cancel-btn" onclick="refreshGalleryView()">Mégse</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.saveImageContent = async function(imageId) {
+            const nameInput = document.getElementById(`edit-image-name-input-${imageId}`);
+            const textInput = document.getElementById(`edit-image-text-input-${imageId}`);
+            if(!nameInput || !textInput) return;
+            const newName = nameInput.value.trim(); const newText = textInput.value.trim();
+            if(!newName) return;
+            try { await update(dbRef(database, `pure_images/${imageId}`), { name: newName, text: newText, edited: true }); }
+            catch(e) { alert("Szerkesztési hiba!"); }
+        }
+
+        window.openEditComment = function(imageId, commentId, currentText) {
+            const targetDiv = document.getElementById(`comment-text-${imageId}-${commentId}`);
+            if(!targetDiv) return;
+            const safeText = currentText.replace(/"/g, '&quot;');
+            targetDiv.innerHTML = `
+                <div class="inline-edit-box" style="padding:0;">
+                    <div class="text-formatter-ui" style="border: 1px solid #ccc; border-bottom:none;">
+                        <button type="button" onclick="formatText('edit-comment-input-${imageId}-${commentId}', 'B')">B</button>
+                        <button type="button" onclick="formatText('edit-comment-input-${imageId}-${commentId}', 'I')">I</button>
+                        <button type="button" onclick="formatText('edit-comment-input-${imageId}-${commentId}', 'U')">U</button>
+                        <button type="button" onclick="formatText('edit-comment-input-${imageId}-${commentId}', 'S')">S</button>
+                        <button type="button" onclick="formatText('edit-comment-input-${imageId}-${commentId}', 'URL')">🔗 Link</button>
+                    </div>
+                    <input type="text" id="edit-comment-input-${imageId}-${commentId}" value="${safeText}" autocomplete="off" style="border-radius:0 0 4px 4px;">
+                    <div class="inline-edit-btn-group">
+                        <button class="inline-save-btn" onclick="saveComment('${imageId}', '${commentId}')">Mentés</button>
+                        <button class="inline-cancel-btn" onclick="refreshGalleryView()">Mégse</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.saveComment = async function(imageId, commentId) {
+            const input = document.getElementById(`edit-comment-input-${imageId}-${commentId}`);
+            if(!input) return;
+            const newText = input.value.trim(); if(!newText) return;
+            try { await update(dbRef(database, `pure_images/${imageId}/comments/${commentId}`), { text: newText, edited: true }); }
+            catch(e) { alert("Szerkesztési hiba!"); }
+        }
+
+        window.deleteComment = async function(imageId, commentId) {
+            if(confirm("Biztosan törlöd a kommentet?")) await remove(dbRef(database, `pure_images/${imageId}/comments/${commentId}`));
+        }
+        window.deleteImage = function(imageKey) {
+            if (confirm("Biztosan törlöd a képet?")) remove(dbRef(database, `pure_images/${imageKey}`));
+        }
+        window.deleteUserAccount = function(userKey) {
+            if (currentUser && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                if (confirm("Törlöd a profilt?")) remove(dbRef(database, `users/${userKey}`));
+            }
+        }
+
+        let currentGallerySnapshot = null;
+        onValue(dbRef(database, 'pure_images'), (snapshot) => { currentGallerySnapshot = snapshot; refreshGalleryView(); });
+
+        onValue(dbRef(database, 'users'), (snapshot) => {
+            const tbody = document.getElementById('admin-users-list-tbody'); if(!tbody) return; tbody.innerHTML = '';
+            if(!snapshot.exists()) { tbody.innerHTML = '<tr><td colspan="4">Nincs regisztrált fiók.</td></tr>'; return; }
+            Object.keys(snapshot.val()).forEach((key) => {
+                const u = snapshot.val()[key]; const row = document.createElement('tr');
+                row.innerHTML = `<td><strong>${u.name}</strong></td><td>${u.email}</td><td>${u.registeredAt || 'Nincs'}</td><td><button class="user-delete-btn" onclick="deleteUserAccount('${key}')">Törlés</button></td>`;
+                tbody.appendChild(row);
+            });
+        });
+
+        onValue(dbRef(database, 'whitelist'), (snapshot) => {
+            const tbody = document.getElementById('admin-whitelist-tbody'); if(!tbody) return; tbody.innerHTML = '';
+            if(!snapshot.exists()) { tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#888;">Üres a lista.</td></tr>'; return; }
+            Object.keys(snapshot.val()).forEach((key) => {
+                const email = snapshot.val()[key]; const row = document.createElement('tr');
+                row.innerHTML = `<td><strong>${email}</strong></td><td><button class="user-delete-btn" onclick="removeEmailFromWhitelist('${key}')">Törlés</button></td>`;
+                tbody.appendChild(row);
+            });
+        });
+
+        function refreshGalleryView() {
+            const gallery = document.getElementById('dynamic-papakepek-gallery');
+            if (!gallery) return; gallery.innerHTML = '';
+
+            if (!currentGallerySnapshot || !currentGallerySnapshot.exists()) {
+                gallery.innerHTML = '<div class="comic-card"><div class="comic-img-container"><div class="img-placeholder-text">Nincs kép.</div></div></div>'; return;
+            }
+
+            const data = currentGallerySnapshot.val();
+            const itemsArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+            const sortedItems = itemsArray.sort((a, b) => b.timestamp - a.timestamp);
+            const currentEmail = currentUser ? currentUser.email.toLowerCase() : "";
+            const isAdmin = currentEmail === ADMIN_EMAIL.toLowerCase();
+
+            sortedItems.forEach((item) => {
+                const commentsObj = item.comments || {}; const commentsCount = Object.keys(commentsObj).length;
+                let commentsHTML = '';
+                const canManageImage = isAdmin || (item.email && item.email.toLowerCase() === currentEmail);
+
+                Object.keys(commentsObj).forEach((cKey) => {
+                    const c = commentsObj[cKey]; const canManageComment = isAdmin || (c.email && c.email.toLowerCase() === currentEmail);
+                    let commentActions = '';
+                    if (canManageComment) {
+                        const safeText = c.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        commentActions = `
+                            <button class="comment-action-link comment-edit-link" onclick="openEditComment('${item.id}', '${cKey}', '${safeText}')">[Módosít]</button>
+                            <button class="comment-action-link comment-delete-link" onclick="deleteComment('${item.id}', '${cKey}')">[X]</button>
+                        `;
+                    }
+                    // Formázott komment renderelése parseBBCode segítségével
+                    commentsHTML += `
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <div class="comment-meta"><span>${c.name}</span>:</div>
+                                <div class="comment-date-and-actions">
+                                    <div class="comment-date">${formatTimestamp(c.timestamp)} ${c.edited ? '<span class="edited-badge">(Módosítva)</span>' : ''}</div>
+                                    ${commentActions}
+                                </div>
+                            </div>
+                            <div class="comment-text" id="comment-text-${item.id}-${cKey}">${parseBBCode(c.text)}</div>
+                        </div>
+                    `;
+                });
+
+                let formHTML = '';
+                if (currentUser && currentUser.emailVerified) {
+                    // Komment form formázó UI gombokkal
+                    formHTML = `
+                        <div class="comment-form-container">
+                            <div class="text-formatter-ui" style="border: 1px solid #ced4da; border-bottom: none; border-radius: 6px 6px 0 0; padding: 3px 6px;">
+                                <button type="button" style="padding:2px 6px; font-size:0.75rem;" onclick="formatText('comment-input-${item.id}', 'B')">B</button>
+                                <button type="button" style="padding:2px 6px; font-size:0.75rem;" onclick="formatText('comment-input-${item.id}', 'I')">I</button>
+                                <button type="button" style="padding:2px 6px; font-size:0.75rem;" onclick="formatText('comment-input-${item.id}', 'U')">U</button>
+                                <button type="button" style="padding:2px 6px; font-size:0.75rem;" onclick="formatText('comment-input-${item.id}', 'S')">S</button>
+                                <button type="button" style="padding:2px 6px; font-size:0.75rem;" onclick="formatText('comment-input-${item.id}', 'URL')">🔗</button>
+                            </div>
+                            <form onsubmit="submitComment(event, '${item.id}')">
+                                <input type="text" id="comment-input-${item.id}" placeholder="Írj egy kommentet..." required autocomplete="off">
+                                <div class="comment-submit-row"><button type="submit">Küldés</button></div>
+                            </form>
+                        </div>
+                    `;
+                }
+
+                let imageActionButtons = '';
+                if (canManageImage) {
+                    const safeImageName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const safeImageText = (item.text || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    imageActionButtons = `
+                        <div class="action-btn-group">
+                            <button class="edit-btn" onclick="openEditImageContent('${item.id}', '${safeImageName}', '${safeImageText}')">Módosítás</button>
+                            <button class="delete-btn admin-visible" onclick="deleteImage('${item.id}')">Törlés</button>
+                        </div>
+                    `;
+                }
+
+                // Formázott poszt szöveg renderelése parseBBCode segítségével
+                const postTextContent = item.text ? `<div class="card-post-text">${parseBBCode(item.text)}</div>` : '';
+
+                const card = document.createElement('div'); card.className = 'comic-card';
+                card.innerHTML = `
+                    <div class="comic-img-container"><img src="${item.imageData}"></div>
+                    <div id="image-content-edit-zone-${item.id}">
+                        ${postTextContent}
+                        <div class="card-footer-info">
+                            <div class="card-footer-row">
+                                <span>Beküldte: <strong>${item.name}</strong></span>
+                                <span class="card-date">${formatTimestamp(item.timestamp)} ${item.edited ? '<span class="edited-badge">(Módosítva)</span>' : ''}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer-info" style="padding-top: 0;"><div class="card-footer-row" style="justify-content: flex-end;">${imageActionButtons}</div></div>
+                    <button class="comment-toggle-btn" onclick="toggleCommentSection('${item.id}')"><span>💬 Vélemények (${commentsCount})</span><span id="arrow-${item.id}">▼</span></button>
+                    <div class="comment-section-wrapper" id="comments-wrapper-${item.id}"><div class="comments-list">${commentsHTML || '<p style="color:#888; font-style:italic; font-size:0.85rem; text-align:center;">Nincs komment.</p>'}</div>${formHTML}</div>
+                `;
+                gallery.appendChild(card);
+            });
+        }
+
+        window.toggleCommentSection = function(imageId) {
+            const wrapper = document.getElementById(`comments-wrapper-${imageId}`); const arrow = document.getElementById(`arrow-${imageId}`);
+            if(wrapper) { wrapper.classList.toggle('active'); arrow.textContent = wrapper.classList.contains('active') ? "▲" : "▼"; }
+        }
+    </script>
+
+    <script>
+        // FORMÁZÓ ENGINE: Beilleszti a BBCode-okat az éppen aktív kijelölés köré
+        function formatText(textareaId, formatType) {
+            const textarea = document.getElementById(textareaId);
+            if (!textarea) return;
+
+            const startPos = textarea.selectionStart;
+            const endPos = textarea.selectionEnd;
+            const text = textarea.value;
+            const selectedText = text.substring(startPos, endPos);
+
+            let openTag = `[${formatType}]`;
+            let closeTag = `[/${formatType}]`;
+
+            // Link kezelése felugró ablakkal
+            if (formatType === 'URL') {
+                const url = prompt("Add meg a weboldal címét (pl: https://google.com):", "https://");
+                if (url === null) return; // Mégse gomb
+                openTag = `[URL=${url}]`;
+                closeTag = `[/URL]`;
+            }
+
+            // Összerakjuk a szöveget a kódokkal
+            const newText = text.substring(0, startPos) + openTag + (selectedText || (formatType === 'URL' ? "Kattintható Link" : "")) + closeTag + text.substring(endPos);
+            textarea.value = newText;
+
+            // Fókusz és kurzor pozicionálása
+            textarea.focus();
+            const offset = openTag.length + (selectedText ? selectedText.length : (formatType === 'URL' ? 15 : 0)) + closeTag.length;
+            textarea.setSelectionRange(startPos + offset, startPos + offset);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            if(document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).classList.add('active');
+            if(document.getElementById('btn-tab-' + tabId)) document.getElementById('btn-tab-' + tabId).classList.add('active');
+        }
+        function updateFileList() {
+            const fileInput = document.getElementById('uploader-files');
+            if (fileInput.files.length > 0) document.getElementById('selected-files-list').textContent = "Kiválasztva: " + fileInput.files[0].name;
+        }
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 83)) e.preventDefault();
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) e.preventDefault();
+        });
+    </script>
+</body>
+</html>
