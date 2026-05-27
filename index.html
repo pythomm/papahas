@@ -99,8 +99,18 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: #1a1a1a;
             border-bottom: 1px solid #2d2d2d; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
-        .navbar-brand { color: white; font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; }
+        .navbar-brand { color: white; font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; cursor: pointer; }
         .navbar-brand span { color: #ff5722; }
+        
+        .navbar-actions { display: flex; align-items: center; gap: 12px; }
+        
+        .serteschat-nav-btn {
+            background-color: #e64a19; color: white; border: none; padding: 8px 16px;
+            border-radius: 20px; font-weight: bold; font-size: 0.9rem; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(230, 74, 25, 0.4);
+        }
+        .serteschat-nav-btn:hover { background-color: #ff5722; transform: scale(1.05); }
+
         .auth-container { position: relative; }
         .auth-icon-btn {
             background-color: #2d2d2d; color: white; border: 1px solid #28a745; width: 42px; height: 42px;
@@ -157,7 +167,6 @@
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
         
-        /* Formázó UI gombok stílusa */
         .text-formatter-ui {
             display: flex; gap: 4px; background: #f1f3f5; border: 2px solid #ccc; border-bottom: none; border-radius: 8px 8px 0 0; padding: 6px;
         }
@@ -195,7 +204,6 @@
         /* Gallery Styles */
         .gallery-title { font-size: 2rem; margin: 40px 0 20px 0; text-align: center; color: #1a1a1a; }
         
-        /* Poszt formázott szövegének stílusai */
         .card-post-text {
             padding: 15px 15px 5px 15px; font-size: 0.95rem; color: #333; line-height: 1.4; word-break: break-word; background: #ffffff; -webkit-user-select: text; user-select: text;
         }
@@ -246,6 +254,69 @@
         .comment-form-container input[type="text"] { width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 0 0 6px 6px; outline: none; -webkit-user-select: text; user-select: text; }
         .comment-form-container .comment-submit-row { display: flex; justify-content: flex-end; margin-top: 6px; }
         .comment-form-container button[type="submit"] { background: #ff5722; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* SertésCHAT Kétoszlopos elrendezés (Lista + Üzenetek) */
+        .chat-main-container {
+            background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            width: 100%; max-width: 950px; margin: 0 auto; display: flex; height: 600px; overflow: hidden; border: 1px solid #ddd;
+        }
+        @media (max-width: 700px) { .chat-main-container { flex-direction: column; height: 750px; } }
+
+        /* Bal oldali "Éhesek" lista sáv */
+        .chat-sidebar {
+            width: 280px; background: #1e1e1e; color: white; display: flex; flex-direction: column; border-right: 1px solid #2d2d2d;
+        }
+        @media (max-width: 700px) { .chat-sidebar { width: 100%; height: 200px; border-right: none; border-bottom: 1px solid #2d2d2d; } }
+        
+        .chat-sidebar-header {
+            padding: 15px; background: #151515; font-size: 1rem; font-weight: bold; border-bottom: 1px solid #2d2d2d; color: #ff5722; text-align: center;
+        }
+        .chat-user-list {
+            flex: 1; overflow-y: auto; padding: 10px 0; list-style: none;
+        }
+        .chat-user-item {
+            padding: 12px 20px; cursor: pointer; transition: background 0.2s; font-weight: 600; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #252525; font-size: 0.95rem;
+        }
+        .chat-user-item:hover { background: #2d2d2d; }
+        .chat-user-item.active { background: #ff5722; color: white; }
+
+        /* Jobb oldali üzenetváltó terület */
+        .chat-content-area {
+            flex: 1; display: flex; flex-direction: column; background: #f8f9fa; position: relative;
+        }
+        .chat-area-header {
+            padding: 15px 20px; background: #ffffff; border-bottom: 1px solid #eee; font-weight: bold; font-size: 1.1rem; color: #333; display: flex; align-items: center; gap: 8px;
+        }
+        .chat-messages-box {
+            flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+        }
+        
+        /* Csevegőbuborék stílusok */
+        .chat-bubble-row { display: flex; width: 100%; }
+        .chat-bubble-row.sent { justify-content: flex-end; }
+        .chat-bubble-row.received { justify-content: flex-start; }
+        
+        .chat-bubble {
+            max-width: 70%; padding: 10px 14px; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; word-break: break-word; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            -webkit-user-select: text; user-select: text;
+        }
+        .chat-bubble-row.sent .chat-bubble { background: #ff5722; color: white; border-bottom-right-radius: 2px; }
+        .chat-bubble-row.received .chat-bubble { background: #ffffff; color: #333; border-bottom-left-radius: 2px; border: 1px solid #e0e0e0; }
+        
+        .chat-bubble-time { font-size: 0.7rem; margin-top: 4px; text-align: right; opacity: 0.7; font-style: italic; }
+
+        .chat-input-bar {
+            display: flex; gap: 10px; padding: 15px; background: #ffffff; border-top: 1px solid #eee;
+        }
+        .chat-input-bar input {
+            flex: 1; padding: 12px 16px; border: 2px solid #ccc; border-radius: 8px; font-size: 1rem; outline: none; transition: border-color 0.3s; -webkit-user-select: text; user-select: text;
+        }
+        .chat-input-bar input:focus { border-color: #ff5722; }
+        .chat-send-btn {
+            background-color: #ff5722; color: white; border: none; padding: 0 24px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s;
+        }
+        .chat-send-btn:hover { background-color: #e64a19; }
+        .chat-placeholder-info { text-align: center; color: #888; font-style: italic; margin-top: auto; margin-bottom: auto; font-size: 1.1rem; padding: 20px; }
     </style>
 </head>
 <body class="locked">
@@ -266,21 +337,26 @@
 
     <div id="main-wrapper">
         <nav class="top-navbar">
-            <div class="navbar-brand">PAPA<span>HAS</span></div>
-            <div class="auth-container">
-                <button class="auth-icon-btn" onclick="toggleAuthDropdown()">👤</button>
-                <div class="auth-dropdown" id="auth-dropdown-panel">
-                    <div class="user-logged-in-info">
-                        <h3>Szia, <span id="user-profile-name">Felhasználó</span>!</h3>
-                        <p style="font-size: 0.8rem; color: #888;" id="user-profile-email">email@cim.com</p>
-                        <div class="email-change-box">
-                            <label for="new-email-input">E-mail módosítása:</label>
-                            <input type="email" id="new-email-input" placeholder="Új e-mail cím">
-                            <button onclick="handleChangeEmail()" style="background-color: #28a745; font-size:0.85rem; padding:6px; margin-bottom: 12px;">Frissítés</button>
-                            <label>Fiók biztonság:</label>
-                            <button onclick="handleLoggedInResetPassword()" style="background-color: #17a2b8; font-size:0.85rem; padding:6px;">Jelszó módosítása e-mailben</button>
+            <div class="navbar-brand" onclick="switchTab('zsirhasu')">PAPA<span>HAS</span></div>
+            
+            <div class="navbar-actions">
+                <button class="serteschat-nav-btn" id="btn-nav-serteschat" onclick="switchTab('serteschat')">SertésCHAT 🐷</button>
+                
+                <div class="auth-container">
+                    <button class="auth-icon-btn" onclick="toggleAuthDropdown()">👤</button>
+                    <div class="auth-dropdown" id="auth-dropdown-panel">
+                        <div class="user-logged-in-info">
+                            <h3>Szia, <span id="user-profile-name">Felhasználó</span>!</h3>
+                            <p style="font-size: 0.8rem; color: #888;" id="user-profile-email">email@cim.com</p>
+                            <div class="email-change-box">
+                                <label for="new-email-input">E-mail módosítása:</label>
+                                <input type="email" id="new-email-input" placeholder="Új e-mail cím">
+                                <button onclick="handleChangeEmail()" style="background-color: #28a745; font-size:0.85rem; padding:6px; margin-bottom: 12px;">Frissítés</button>
+                                <label>Fiók biztonság:</label>
+                                <button onclick="handleLoggedInResetPassword()" style="background-color: #17a2b8; font-size:0.85rem; padding:6px;">Jelszó módosítása e-mailben</button>
+                            </div>
+                            <button onclick="handleLogout()" style="background-color: #6c757d; margin-top: 15px;">Kijelentkezés</button>
                         </div>
-                        <button onclick="handleLogout()" style="background-color: #6c757d; margin-top: 15px;">Kijelentkezés</button>
                     </div>
                 </div>
             </div>
@@ -299,6 +375,8 @@
                 <button class="tab-button" id="btn-tab-zsirhasu2" onclick="switchTab('zsirhasu2')">Én a zsírhasú 2</button>
                 <button class="tab-button" id="btn-tab-zsirhasu-film" onclick="switchTab('zsirhasu-film')">Én a zsírhasú, a film</button>
                 <button class="tab-button" id="btn-tab-papakepek" onclick="switchTab('papakepek')">Papaképek</button>
+                <button class="tab-button" id="btn-tab-serteschat" onclick="switchTab('serteschat')" style="display:none;">SertésCHAT</button>
+                
                 <button class="tab-button admin-only-tab" id="btn-tab-admin-whitelist" onclick="switchTab('admin-whitelist')">✉️ Engedélyezett E-mailek</button>
                 <button class="tab-button admin-only-tab" id="btn-tab-admin-users" onclick="switchTab('admin-users')">⚙️ Regisztrált Fiókok</button>
             </div>
@@ -332,7 +410,7 @@
                         <form id="papa-upload-form" onsubmit="handleDirectUpload(event)">
                             
                             <div class="form-group">
-                                <label for="uploader-text">Szöveg / Leírás (opcionális):</label>
+                                <label for="uploader-text">Szöveg / Leírás:</label>
                                 <div class="text-formatter-ui">
                                     <button type="button" onclick="formatText('uploader-text', 'B')">B</button>
                                     <button type="button" onclick="formatText('uploader-text', 'I')"><em>I</em></button>
@@ -340,14 +418,14 @@
                                     <button type="button" onclick="formatText('uploader-text', 'S')"><s>S</s></button>
                                     <button type="button" onclick="formatText('uploader-text', 'URL')">🔗 Link</button>
                                 </div>
-                                <textarea id="uploader-text" rows="3" placeholder="Írj valamit a képhez..."></textarea>
+                                <textarea id="uploader-text" rows="3" placeholder="Írj valamit a bejegyzésbe..."></textarea>
                             </div>
 
                             <div class="form-group">
-                                <label>Kép kiválasztása:</label>
+                                <label>Kép kiválasztása (Opcionális):</label>
                                 <div class="file-drop-zone">
-                                    <p>Kattints ide vagy húzd ide a képet</p>
-                                    <input type="file" id="uploader-files" accept=".png, .jpg, .jpeg, .gif, .webp, .svg" required onchange="updateFileList()">
+                                    <p>Kattints ide vagy húzd ide a képet (Nem kötelező)</p>
+                                    <input type="file" id="uploader-files" accept=".png, .jpg, .jpeg, .gif, .webp, .svg" onchange="updateFileList()">
                                 </div>
                                 <div id="selected-files-list" class="file-list"></div>
                             </div>
@@ -360,6 +438,32 @@
 
                 <h3 class="gallery-title">Galéria</h3>
                 <div class="comic-grid" id="dynamic-papakepek-gallery"></div>
+            </div>
+
+            <div id="tab-serteschat" class="tab-content">
+                <h2 class="section-title">🐷 SertésCHAT 🐷</h2>
+                <div class="chat-main-container">
+                    <div class="chat-sidebar">
+                        <div class="chat-sidebar-header">Éhesek 🐖</div>
+                        <ul class="chat-user-list" id="serteschat-user-list-ul">
+                            </ul>
+                    </div>
+                    
+                    <div class="chat-content-area">
+                        <div class="chat-area-header" id="serteschat-header-title">Válassz valakit a listából a csevegéshez!</div>
+                        
+                        <div class="chat-messages-box" id="serteschat-msg-container">
+                            <div class="chat-placeholder-info" id="serteschat-placeholder-text">
+                                Kattints egy névre a bal oldalon, hogy betöltsd a titkos privát üzeneteket!
+                            </div>
+                        </div>
+                        
+                        <div class="chat-input-bar">
+                            <input type="text" id="serteschat-input-field" placeholder="Válassz ki egy Éhest..." autocomplete="off" disabled>
+                            <button class="chat-send-btn" id="serteschat-send-btn" onclick="sendSertesChatMessage()" disabled>Küldés</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div id="tab-admin-whitelist" class="tab-content">
@@ -411,6 +515,10 @@
         const ADMIN_EMAIL = "lartacereal@gmail.com"; 
         let currentUser = null;
         let gateMode = "login";
+        
+        let activeChatPartnerId = null;
+        let activeChatPartnerName = "";
+        let chatMessagesListenerUnsubscribe = null; 
 
         setPersistence(auth, browserLocalPersistence).catch((e) => console.error(e));
 
@@ -420,23 +528,21 @@
             return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}. ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         }
 
-        // BIZTONSÁGOS SZÖVEGPARSOLÓ: Átalakítja a [B], [I], [U], [S] és [URL] kódokat HTML-lé
+        function formatChatTime(ts) {
+            if (!ts) return "";
+            const d = new Date(ts);
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
         window.parseBBCode = function(text) {
             if(!text) return "";
-            // Először kiszűrjük az esetleges beírt veszélyes HTML kódokat a biztonságért
             let clean = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            
-            // BBCode-ok cseréje regular expression segítségével
             clean = clean.replace(/\[B\]([\s\S]*?)\[\/B\]/gi, "<strong>$1</strong>");
             clean = clean.replace(/\[I\]([\s\S]*?)\[\/I\]/gi, "<em>$1</em>");
             clean = clean.replace(/\[U\]([\s\S]*?)\[\/U\]/gi, "<u>$1</u>");
             clean = clean.replace(/\[S\]([\s\S]*?)\[\/S\]/gi, "<s>$1</s>");
-            
-            // [URL=link]szöveg[/URL] vagy sima [URL]link[/URL] átalakítása
             clean = clean.replace(/\[URL=([^\]]+)\]([\s\S]*?)\[\/URL\]/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>');
             clean = clean.replace(/\[URL\]([\s\S]*?)\[\/URL\]/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-            
-            // Sortörések megtartása
             return clean.replace(/\n/g, "<br>");
         }
 
@@ -577,6 +683,9 @@
         window.toggleAuthDropdown = function() { document.getElementById('auth-dropdown-panel').classList.toggle('active'); }
         window.handleLogout = function() { signOut(auth).then(() => { switchTab('zsirhasu'); }); }
 
+        let isGalleryLoading = true;
+
+        // MÓDOSÍTVA: Automatikus profil javítás bejelentkezéskor (Biztonsági háló)
         onAuthStateChanged(auth, async (user) => {
             const gate = document.getElementById('auth-gate');
             const mainWrapper = document.getElementById('main-wrapper');
@@ -587,17 +696,36 @@
                     currentUser = null; showGateStatus("A belépéshez előbb aktiválnod kell a fiókodat az e-mailben kapott linkkel!", "error"); await signOut(auth);
                     document.body.className = "locked"; mainWrapper.style.display = 'none'; gate.style.display = 'flex'; gate.style.opacity = '1'; return;
                 }
-                currentUser = user; gate.style.opacity = '0';
+                currentUser = user; 
+
+                // ÚJ: Ellenőrizzük, hogy a felhasználó szerepel-e a Realtime Database users ágában
+                try {
+                    const userDbSnapshot = await get(dbRef(database, `users/${user.uid}`));
+                    if (!userDbSnapshot.exists()) {
+                        // Ha nem létezik az adatbázisban, most pótoljuk és létrehozzuk!
+                        const fallbackName = user.displayName || user.email.split('@')[0];
+                        await set(dbRef(database, `users/${user.uid}`), {
+                            name: fallbackName,
+                            email: user.email,
+                            registeredAt: new Date().toLocaleDateString('hu-HU') + " (Automatikus)"
+                        });
+                        console.log(`Profil automatikusan pótolva az adatbázisban: ${fallbackName}`);
+                    }
+                } catch (dbErr) {
+                    console.error("Hiba a profil ellenőrzésekor:", dbErr);
+                }
+
+                gate.style.opacity = '0';
                 setTimeout(() => { gate.style.display = 'none'; mainWrapper.style.display = 'block'; document.body.className = "unlocked"; }, 400);
 
-                document.getElementById('user-profile-name').textContent = user.displayName || "Felhasználó";
+                document.getElementById('user-profile-name').textContent = user.displayName || user.email.split('@')[0];
                 document.getElementById('user-profile-email').textContent = user.email;
                 
                 const isAdmin = user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
                 document.querySelectorAll('.admin-only-tab').forEach(el => {
                     if(isAdmin) el.classList.add('admin-visible'); else el.classList.remove('admin-visible');
                 });
-                if(uploadSubtitle) uploadSubtitle.innerHTML = `Szia <strong>${user.displayName}</strong>! Oszd meg a legújabb papaképet, formázd a szöveget kedvedre.`;
+                if(uploadSubtitle) uploadSubtitle.innerHTML = `Szia <strong>${user.displayName || user.email.split('@')[0]}</strong>! Oszd meg a legújabb bejegyzést, tölthetsz fel képet is vagy írhatsz csak simán szöveget.`;
             } else {
                 currentUser = null; document.body.className = "locked"; mainWrapper.style.display = 'none'; gate.style.display = 'flex'; gate.style.opacity = '1';
             }
@@ -615,14 +743,22 @@
             const textInput = document.getElementById('uploader-text');
             const statusMsg = document.getElementById('form-status-msg');
             const btn = document.getElementById('upload-btn');
-            if(fileInput.files.length === 0) return;
+            
+            const postText = textInput.value.trim();
+            const hasFile = fileInput.files.length > 0;
+
+            if (!hasFile && !postText) {
+                statusMsg.style.display = "block"; statusMsg.className = "form-status error"; statusMsg.textContent = "Kérlek írj szöveget vagy válassz egy képet a posztoláshoz!"; return;
+            }
 
             btn.disabled = true; statusMsg.style.display = "block"; statusMsg.className = "form-status success"; statusMsg.textContent = "Küldés...";
 
             try {
-                const base64Image = await convertFileToBase64(fileInput.files[0]);
+                let base64Image = "";
+                if (hasFile) base64Image = await convertFileToBase64(fileInput.files[0]);
+
                 await set(push(dbRef(database, 'pure_images')), {
-                    name: currentUser.displayName || "Névtelen", email: currentUser.email, imageData: base64Image, text: textInput.value.trim(), timestamp: Date.now()
+                    name: currentUser.displayName || currentUser.email.split('@')[0], email: currentUser.email, imageData: base64Image, text: postText, timestamp: Date.now()
                 });
                 statusMsg.textContent = "Sikeres posztolás!";
                 document.getElementById('papa-upload-form').reset(); document.getElementById('selected-files-list').innerHTML = '';
@@ -637,7 +773,7 @@
             if(!text || !currentUser || !currentUser.emailVerified) return;
             try {
                 await set(push(dbRef(database, `pure_images/${imageId}/comments`)), {
-                    name: currentUser.displayName || "Névtelen", email: currentUser.email, text: text, timestamp: Date.now()
+                    name: currentUser.displayName || currentUser.email.split('@')[0], email: currentUser.email, text: text, timestamp: Date.now()
                 });
                 inputField.value = '';
             } catch(e) { alert("Hiba."); }
@@ -646,13 +782,11 @@
         window.openEditImageContent = function(imageId, currentName, currentText) {
             const targetDiv = document.getElementById(`image-content-edit-zone-${imageId}`);
             if(!targetDiv) return;
-            
             const safeText = currentText.replace(/"/g, '&quot;');
             targetDiv.innerHTML = `
                 <div class="inline-edit-box">
                     <label style="font-size:0.75rem; font-weight:bold; color:#ff5722;">Beküldő neve:</label>
                     <input type="text" id="edit-image-name-input-${imageId}" value="${currentName}" autocomplete="off">
-                    
                     <label style="font-size:0.75rem; font-weight:bold; color:#ff5722; margin-top:5px;">Poszt szövege (Formázható):</label>
                     <div class="text-formatter-ui">
                         <button type="button" onclick="formatText('edit-image-text-input-${imageId}', 'B')">B</button>
@@ -662,7 +796,6 @@
                         <button type="button" onclick="formatText('edit-image-text-input-${imageId}', 'URL')">🔗 Link</button>
                     </div>
                     <textarea id="edit-image-text-input-${imageId}" rows="3">${safeText}</textarea>
-                    
                     <div class="inline-edit-btn-group">
                         <button class="inline-save-btn" onclick="saveImageContent('${imageId}')">Mentés</button>
                         <button class="inline-cancel-btn" onclick="refreshGalleryView()">Mégse</button>
@@ -715,7 +848,7 @@
             if(confirm("Biztosan törlöd a kommentet?")) await remove(dbRef(database, `pure_images/${imageId}/comments/${commentId}`));
         }
         window.deleteImage = function(imageKey) {
-            if (confirm("Biztosan törlöd a képet?")) remove(dbRef(database, `pure_images/${imageKey}`));
+            if (confirm("Biztosan törlöd a bejegyzést?")) remove(dbRef(database, `pure_images/${imageKey}`));
         }
         window.deleteUserAccount = function(userKey) {
             if (currentUser && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
@@ -724,15 +857,45 @@
         }
 
         let currentGallerySnapshot = null;
-        onValue(dbRef(database, 'pure_images'), (snapshot) => { currentGallerySnapshot = snapshot; refreshGalleryView(); });
+        
+        onValue(dbRef(database, 'pure_images'), (snapshot) => { 
+            isGalleryLoading = false; currentGallerySnapshot = snapshot; refreshGalleryView(); 
+        });
 
+        // A regisztrált felhasználók beolvasása és az "Éhesek" lista építése
         onValue(dbRef(database, 'users'), (snapshot) => {
-            const tbody = document.getElementById('admin-users-list-tbody'); if(!tbody) return; tbody.innerHTML = '';
-            if(!snapshot.exists()) { tbody.innerHTML = '<tr><td colspan="4">Nincs regisztrált fiók.</td></tr>'; return; }
-            Object.keys(snapshot.val()).forEach((key) => {
-                const u = snapshot.val()[key]; const row = document.createElement('tr');
-                row.innerHTML = `<td><strong>${u.name}</strong></td><td>${u.email}</td><td>${u.registeredAt || 'Nincs'}</td><td><button class="user-delete-btn" onclick="deleteUserAccount('${key}')">Törlés</button></td>`;
-                tbody.appendChild(row);
+            const tbody = document.getElementById('admin-users-list-tbody');
+            const chatUserUl = document.getElementById('serteschat-user-list-ul');
+            
+            if(tbody) tbody.innerHTML = '';
+            if(chatUserUl) chatUserUl.innerHTML = '';
+
+            if(!snapshot.exists()) {
+                if(tbody) tbody.innerHTML = '<tr><td colspan="4">Nincs regisztrált fiók.</td></tr>';
+                if(chatUserUl) chatUserUl.innerHTML = '<li style="padding:15px; text-align:center; color:#888;">Nincsenek felhasználók.</li>';
+                return;
+            }
+
+            const usersData = snapshot.val();
+
+            Object.keys(usersData).forEach((key) => {
+                const u = usersData[key];
+                
+                if(tbody) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td><strong>${u.name}</strong></td><td>${u.email}</td><td>${u.registeredAt || 'Nincs'}</td><td><button class="user-delete-btn" onclick="deleteUserAccount('${key}')">Törlés</button></td>`;
+                    tbody.appendChild(row);
+                }
+
+                // SertésCHAT felhasználói lista építése (saját magunkat kihagyjuk)
+                if(chatUserUl && currentUser && key !== currentUser.uid) {
+                    const li = document.createElement('li');
+                    li.className = 'chat-user-item';
+                    li.id = `chat-user-item-${key}`;
+                    li.innerHTML = `<span>🐷 ${u.name}</span>`;
+                    li.onclick = () => selectChatPartner(key, u.name);
+                    chatUserUl.appendChild(li);
+                }
             });
         });
 
@@ -746,9 +909,93 @@
             });
         });
 
+        // Csevegőpartner kiválasztásának logikája
+        window.selectChatPartner = function(partnerUid, partnerName) {
+            if(!currentUser) return;
+            
+            document.querySelectorAll('.chat-user-item').forEach(li => li.classList.remove('active'));
+            const activeLi = document.getElementById(`chat-user-item-${partnerUid}`);
+            if(activeLi) activeLi.classList.add('active');
+
+            activeChatPartnerId = partnerUid;
+            activeChatPartnerName = partnerName;
+
+            document.getElementById('serteschat-header-title').textContent = `Csevegés vele: ${partnerName} 💬`;
+            document.getElementById('serteschat-input-field').disabled = false;
+            document.getElementById('serteschat-input-field').placeholder = "Sertés vagy Disznó?";
+            document.getElementById('serteschat-send-btn').disabled = false;
+
+            if (chatMessagesListenerUnsubscribe) {
+                chatMessagesListenerUnsubscribe();
+            }
+
+            const chatRoomId = currentUser.uid < partnerUid ? `${currentUser.uid}_${partnerUid}` : `${partnerUid}_${currentUser.uid}`;
+            
+            const msgContainer = document.getElementById('serteschat-msg-container');
+            msgContainer.innerHTML = '<div style="text-align:center; color:#ff5722; padding:20px; font-style:italic;">Üzenetek betöltése...</div>';
+
+            chatMessagesListenerUnsubscribe = onValue(dbRef(database, `sertes_chat_messages/${chatRoomId}`), (snapshot) => {
+                msgContainer.innerHTML = '';
+                
+                if(!snapshot.exists()) {
+                    msgContainer.innerHTML = `<div class="chat-placeholder-info">Még nincs üzenetváltásotok. Írj neki valami szépet!</div>`;
+                    return;
+                }
+
+                Object.values(snapshot.val()).forEach((msg) => {
+                    const isMe = msg.senderId === currentUser.uid;
+                    const row = document.createElement('div');
+                    row.className = `chat-bubble-row ${isMe ? 'sent' : 'received'}`;
+                    
+                    row.innerHTML = `
+                        <div class="chat-bubble">
+                            <div>${parseBBCode(msg.text)}</div>
+                            <div class="chat-bubble-time">${formatChatTime(msg.timestamp)}</div>
+                        </div>
+                    `;
+                    msgContainer.appendChild(row);
+                });
+
+                msgContainer.scrollTop = msgContainer.scrollHeight;
+            });
+        }
+
+        window.sendSertesChatMessage = async function() {
+            const input = document.getElementById('serteschat-input-field');
+            const text = input.value.trim();
+            if(!text || !currentUser || !activeChatPartnerId) return;
+
+            const chatRoomId = currentUser.uid < activeChatPartnerId ? `${currentUser.uid}_${activeChatPartnerId}` : `${activeChatPartnerId}_${currentUser.uid}`;
+
+            try {
+                const newMessageRef = push(dbRef(database, `sertes_chat_messages/${chatRoomId}`));
+                await set(newMessageRef, {
+                    senderId: currentUser.uid,
+                    senderName: currentUser.displayName || currentUser.email.split('@')[0],
+                    text: text,
+                    timestamp: Date.now()
+                });
+                input.value = '';
+                input.focus();
+            } catch(e) {
+                console.error("Firebase Chat hiba részletei:", e);
+                alert("Hiba történt az üzenet küldése közben! Részletek a konzolban.");
+            }
+        }
+
+        document.getElementById('serteschat-input-field').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendSertesChatMessage();
+            }
+        });
+
         function refreshGalleryView() {
             const gallery = document.getElementById('dynamic-papakepek-gallery');
             if (!gallery) return; gallery.innerHTML = '';
+
+            if (isGalleryLoading) {
+                gallery.innerHTML = '<div style="width:100%; text-align:center; padding: 40px; font-weight:bold; color:#ff5722; font-size:1.2rem;">Papaképek betöltése, kérlek várj...</div>'; return;
+            }
 
             if (!currentGallerySnapshot || !currentGallerySnapshot.exists()) {
                 gallery.innerHTML = '<div class="comic-card"><div class="comic-img-container"><div class="img-placeholder-text">Nincs kép.</div></div></div>'; return;
@@ -775,7 +1022,6 @@
                             <button class="comment-action-link comment-delete-link" onclick="deleteComment('${item.id}', '${cKey}')">[X]</button>
                         `;
                     }
-                    // Formázott komment renderelése parseBBCode segítségével
                     commentsHTML += `
                         <div class="comment-item">
                             <div class="comment-header">
@@ -792,7 +1038,6 @@
 
                 let formHTML = '';
                 if (currentUser && currentUser.emailVerified) {
-                    // Komment form formázó UI gombokkal
                     formHTML = `
                         <div class="comment-form-container">
                             <div class="text-formatter-ui" style="border: 1px solid #ced4da; border-bottom: none; border-radius: 6px 6px 0 0; padding: 3px 6px;">
@@ -822,12 +1067,12 @@
                     `;
                 }
 
-                // Formázott poszt szöveg renderelése parseBBCode segítségével
                 const postTextContent = item.text ? `<div class="card-post-text">${parseBBCode(item.text)}</div>` : '';
+                const imageContainerHTML = item.imageData ? `<div class="comic-img-container"><img src="${item.imageData}"></div>` : '';
 
                 const card = document.createElement('div'); card.className = 'comic-card';
                 card.innerHTML = `
-                    <div class="comic-img-container"><img src="${item.imageData}"></div>
+                    ${imageContainerHTML}
                     <div id="image-content-edit-zone-${item.id}">
                         ${postTextContent}
                         <div class="card-footer-info">
@@ -852,7 +1097,6 @@
     </script>
 
     <script>
-        // FORMÁZÓ ENGINE: Beilleszti a BBCode-okat az éppen aktív kijelölés köré
         function formatText(textareaId, formatType) {
             const textarea = document.getElementById(textareaId);
             if (!textarea) return;
@@ -865,19 +1109,16 @@
             let openTag = `[${formatType}]`;
             let closeTag = `[/${formatType}]`;
 
-            // Link kezelése felugró ablakkal
             if (formatType === 'URL') {
                 const url = prompt("Add meg a weboldal címét (pl: https://google.com):", "https://");
-                if (url === null) return; // Mégse gomb
+                if (url === null) return; 
                 openTag = `[URL=${url}]`;
                 closeTag = `[/URL]`;
             }
 
-            // Összerakjuk a szöveget a kódokkal
             const newText = text.substring(0, startPos) + openTag + (selectedText || (formatType === 'URL' ? "Kattintható Link" : "")) + closeTag + text.substring(endPos);
             textarea.value = newText;
 
-            // Fókusz és kurzor pozicionálása
             textarea.focus();
             const offset = openTag.length + (selectedText ? selectedText.length : (formatType === 'URL' ? 15 : 0)) + closeTag.length;
             textarea.setSelectionRange(startPos + offset, startPos + offset);
@@ -888,10 +1129,15 @@
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             if(document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).classList.add('active');
             if(document.getElementById('btn-tab-' + tabId)) document.getElementById('btn-tab-' + tabId).classList.add('active');
+            
+            if(tabId === 'serteschat') {
+                document.getElementById('tab-serteschat').scrollIntoView({ behavior: 'smooth' });
+            }
         }
         function updateFileList() {
             const fileInput = document.getElementById('uploader-files');
             if (fileInput.files.length > 0) document.getElementById('selected-files-list').textContent = "Kiválasztva: " + fileInput.files[0].name;
+            else document.getElementById('selected-files-list').textContent = "";
         }
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', function(e) {
