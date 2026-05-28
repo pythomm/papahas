@@ -1,0 +1,20 @@
+{
+  "name": "PAPAHAS",
+  "short_name": "PAPAHAS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFB444",
+  "icons": [
+    {
+      "src": "icocio.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icoico.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
